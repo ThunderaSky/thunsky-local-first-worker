@@ -40,7 +40,10 @@
   "scripts": {
     "build": "tsc && pnpm -r build",
     "dev": "tsx watch src/index.ts",
+    "local": "tsx src/local/cli.ts",
+    "local:build": "tsc && node dist/local/cli.js",
     "test": "vitest run",
+    "test:local": "vitest run src/__tests__/local",
     "typecheck": "tsc --noEmit",
     "test:coverage": "vitest run --coverage",
     "test:security": "vitest run --grep 'security|injection|policy'",

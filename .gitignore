@@ -11,3 +11,6 @@ dist
 .automaton/wallet.json
 .automaton/state.db
 
+# Local-first worker runtime state (task records, artifacts)
+local-runtime/
+
