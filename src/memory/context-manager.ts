@@ -128,6 +128,18 @@ function formatCacheKey(text: string, model?: string): string {
   return `${model ?? "default"}::${text}`;
 }
 
+/**
+ * Maximum prefix passed to the BPE encoder before extrapolating.
+ *
+ * js-tiktoken's encode() is quadratic on runs of repeated characters
+ * (10k identical chars ≈ 30s on a low-end machine), which can stall the
+ * whole process synchronously. Natural-language prefixes are
+ * representative of the full text, so counting a bounded prefix and
+ * scaling by length keeps estimates accurate while capping worst-case
+ * cost at a few hundred ms.
+ */
+const MAX_BPE_PREFIX_CHARS = 1024;
+
 export function createTokenCounter(): TokenCounter {
   const cache = new Map<string, number>();
   let encoder: Tiktoken | null = null;
@@ -152,7 +164,21 @@ export function createTokenCounter(): TokenCounter {
     let count: number;
     if (encoder) {
       try {
-        count = encoder.encode(normalizedText).length;
+        if (normalizedText.length <= MAX_BPE_PREFIX_CHARS) {
+          count = encoder.encode(normalizedText).length;
+        } else {
+          // Count a bounded prefix, extrapolate to the full length.
+          // Cut on a code-point boundary so a split surrogate pair can't
+          // poison the sample.
+          let cut = MAX_BPE_PREFIX_CHARS;
+          const code = normalizedText.charCodeAt(cut - 1);
+          if (code >= 0xd800 && code <= 0xdbff) cut -= 1;
+          const sample = normalizedText.slice(0, cut);
+          const sampleTokens = encoder.encode(sample).length;
+          count = Math.ceil(
+            (sampleTokens / sample.length) * normalizedText.length,
+          );
+        }
       } catch {
         count = Math.ceil(normalizedText.length / 3.5);
       }
