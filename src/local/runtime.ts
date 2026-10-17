@@ -57,7 +57,7 @@ export function createLocalRuntime(
     },
 
     async preflight(signal?: AbortSignal): Promise<string[]> {
-      const models = await ollama.listModels(5_000, signal);
+      const models = await ollama.listModels(15_000, signal);
       if (!models.includes(cfg.model)) {
         throw new LocalRuntimeError(
           "MODEL_NOT_FOUND",

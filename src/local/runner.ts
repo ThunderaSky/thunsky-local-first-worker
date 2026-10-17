@@ -101,7 +101,10 @@ export async function runTask(
 
     // ── 1. Preflight: model must exist on the local Ollama ──────────────
     let preflightStart = Date.now();
-    const models = await ollama.listModels(5_000, signal);
+    // Allow a slow-but-alive local server time to respond under memory
+    // pressure (observed up to 40s on a 4 GB machine); connection refused
+    // still fails fast regardless of this cap.
+    const models = await ollama.listModels(15_000, signal);
     if (!models.includes(cfg.model)) {
       throw new LocalRuntimeError(
         "MODEL_NOT_FOUND",

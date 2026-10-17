@@ -107,7 +107,7 @@ export function createOllamaClient(baseUrl: string): OllamaClient {
   }
 
   return {
-    async listModels(timeoutMs = 5_000, signal): Promise<string[]> {
+    async listModels(timeoutMs = 15_000, signal): Promise<string[]> {
       const body = await requestJson("/api/tags", { method: "GET" }, timeoutMs, signal);
       if (!body || !Array.isArray(body.models)) {
         throw new LocalRuntimeError(

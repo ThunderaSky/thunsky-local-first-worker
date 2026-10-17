@@ -26,7 +26,10 @@ interface ParsedArgs {
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
-  const [command = "help", ...rest] = argv;
+  // Drop bare "--" separators — pnpm/npm forward them literally
+  // (`pnpm local -- models` would otherwise make "--" the command).
+  const cleaned = argv.filter((a) => a !== "--");
+  const [command = "help", ...rest] = cleaned;
   const flags: Record<string, string> = {};
   for (let i = 0; i < rest.length; i++) {
     const arg = rest[i];
@@ -127,7 +130,7 @@ async function main(): Promise<number> {
 
       case "models": {
         const runtime = createLocalRuntime(runtimeOverrides(flags));
-        const models = await runtime.ollama.listModels(5_000, controller.signal);
+        const models = await runtime.ollama.listModels(15_000, controller.signal);
         console.log(`Ollama at ${runtime.cfg.ollamaBaseUrl} serves ${models.length} model(s):`);
         for (const m of models) {
           console.log(`  ${m}${m === runtime.cfg.model ? "  <- configured" : ""}`);
