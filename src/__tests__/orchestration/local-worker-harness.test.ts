@@ -292,8 +292,12 @@ describe("orchestration/LocalWorkerPool harness integration", () => {
       maxRetries: 0,
     });
 
+    // os.homedir() reads HOME on POSIX but USERPROFILE on Windows —
+    // set both so the workspace lands under tempHome on any platform.
     const originalHome = process.env.HOME;
+    const originalUserProfile = process.env.USERPROFILE;
     process.env.HOME = tempHome;
+    process.env.USERPROFILE = tempHome;
     try {
       const pool = new LocalWorkerPool({
         db,
@@ -308,6 +312,11 @@ describe("orchestration/LocalWorkerPool harness integration", () => {
       await (pool as any).runWorker("worker-test", task, new AbortController().signal);
     } finally {
       process.env.HOME = originalHome;
+      if (originalUserProfile === undefined) {
+        delete process.env.USERPROFILE;
+      } else {
+        process.env.USERPROFILE = originalUserProfile;
+      }
     }
 
     const row = getTaskById(db, task.id);

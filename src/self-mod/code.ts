@@ -177,9 +177,17 @@ export function isProtectedFile(filePath: string): boolean {
         resolved === pattern) {
       return true;
     }
-    // Handle absolute patterns like /etc/systemd
-    if (pattern.startsWith("/") && resolved.startsWith(pattern)) {
-      return true;
+    // Handle absolute patterns like /etc/systemd. On Windows,
+    // path.resolve("/etc/passwd") yields "C:\etc\passwd", so normalize
+    // separators and strip the drive letter before prefix-matching.
+    if (pattern.startsWith("/")) {
+      const normalized = resolved
+        .replace(/\//g, path.sep)
+        .replace(/^[A-Za-z]:/, "");
+      const normalizedPattern = pattern.replace(/\//g, path.sep);
+      if (normalized.startsWith(normalizedPattern)) {
+        return true;
+      }
     }
   }
 

@@ -35,14 +35,21 @@ const SANDBOX_HOME = "/root";
  * Returns the resolved absolute path, or an error string if out of bounds.
  */
 function confinePathToSandbox(filePath: string): string | { error: string } {
+  // Normalize the sandbox home for the host platform: on Windows,
+  // nodePath.resolve("/root") yields "C:\root" with backslash separators,
+  // so both sides of the containment check must be resolved.
+  const sandboxHome = nodePath.resolve(SANDBOX_HOME);
   // Resolve ~ to SANDBOX_HOME
   const expanded = filePath.startsWith("~")
-    ? nodePath.join(SANDBOX_HOME, filePath.slice(1))
+    ? nodePath.join(sandboxHome, filePath.slice(1))
     : filePath;
   // Resolve to absolute (relative paths resolve against SANDBOX_HOME)
-  const resolved = nodePath.resolve(SANDBOX_HOME, expanded);
+  const resolved = nodePath.resolve(sandboxHome, expanded);
   // Ensure the resolved path is within the sandbox home
-  if (resolved !== SANDBOX_HOME && !resolved.startsWith(SANDBOX_HOME + "/")) {
+  if (
+    resolved !== sandboxHome &&
+    !resolved.startsWith(sandboxHome + nodePath.sep)
+  ) {
     return {
       error: `Blocked: write_file path "${filePath}" resolves to "${resolved}" which is outside the allowed directory (${SANDBOX_HOME}). Writes are confined to the sandbox home.`,
     };
