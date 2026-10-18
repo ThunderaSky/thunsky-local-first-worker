@@ -43,6 +43,7 @@
     "local": "tsx src/local/cli.ts",
     "local:build": "tsc && node dist/local/cli.js",
     "test": "vitest run",
+    "local:smoke": "tsx src/local/smoke.ts",
     "test:local": "vitest run src/__tests__/local",
     "typecheck": "tsc --noEmit",
     "test:coverage": "vitest run --coverage",
